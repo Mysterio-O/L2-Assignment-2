@@ -26,6 +26,16 @@ const createVehicle = async (payload: CreateVehicleProps) => {
 };
 
 
+const getAllVehicles = async () => {
+    const result = await pool.query(`
+        SELECT * FROM vehicles
+        `);
+console.log(result);
+    return result;
+}
+
+
 export const vehicleServices = {
-    createVehicle
+    createVehicle,
+    getAllVehicles
 }
