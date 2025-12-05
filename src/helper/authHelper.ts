@@ -45,6 +45,14 @@ const helpCreate = (payload: Record<string, any>): ValidationError => {
     return null;
 };
 
+const helpLogin = ({ email, password }: { email: string, password: string }) => {
+    if (!email) return { status: 404, message: "email not found" };
+    if (!emailRegex.test(email)) return { status: 400, message: "invalid email" };
+    if (!password) return { status: 404, message: "password not found" };
+    return null;
+}
+
 export const authHelpers = {
     helpCreate,
+    helpLogin
 };

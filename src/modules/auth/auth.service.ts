@@ -2,7 +2,9 @@
 
 import { pool } from "../../config/db";
 import { Role } from "../../types/app/types";
+import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
+import config from "../../config";
 
 interface CreateUserProps {
     name: string;
@@ -10,6 +12,11 @@ interface CreateUserProps {
     password: string;
     phone: string;
     role: Role
+}
+
+interface LoginUserProps {
+    email: string;
+    password: string;
 }
 
 const createUser = async (payload: CreateUserProps) => {
@@ -28,7 +35,43 @@ const createUser = async (payload: CreateUserProps) => {
 
 }
 
+const loginUser = async (payload: LoginUserProps) => {
+    const { email, password } = payload;
+    const result = await pool.query(`
+        SELECT * FROM users WHERE email=$1
+        `, [email]);
+
+    if (result.rowCount === 0) {
+        return { status: 404, message: "user not found with this email" }
+    }
+
+    const user = result.rows[0];
+
+    const matched = await bcrypt.compare(password, user.password);
+
+    if (!matched) return { status: 400, message: "password didn't match" };
+
+    const userPayload = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role
+    }
+
+    const token = jwt.sign(userPayload, config.jwt_secret as string, {
+        expiresIn: "7d"
+    });
+
+    return {
+        success: true,
+        token: token,
+        user: userPayload
+    }
+}
+
 
 export const authServices = {
-    createUser
+    createUser,
+    loginUser
 }
