@@ -15,4 +15,8 @@ router.get("/", vehicleControllers.getAllVehicles);
 router.get("/:id", vehicleControllers.getSingleVehicle);
 
 
+// update vehicle
+router.put("/:id", vehicleControllers.updateVehicle)
+
+
 export const vehicleRoutes = router;

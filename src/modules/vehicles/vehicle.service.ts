@@ -40,6 +40,46 @@ const getSingleVehicle = async (id: string) => {
         SELECT * FROM vehicles WHERE id=$1
         `, [id]);
     return result;
+};
+
+
+const updateVehicle = async (id: string, payload: Record<string, any>) => {
+    const allowedFields = ["vehicle_name", "type", "registration_number", "daily_rent_price", "availability_status",];
+
+    if (!payload) {
+        return null;
+    }
+
+    const setFields: string[] = [];
+    const values: string[] = [];
+    let index = 1;
+
+    for (const field of allowedFields) {
+        if (payload[field] !== undefined) {
+            setFields.push(`${field} = $${index}`);
+            values.push(payload[field]);
+            index++;
+        }
+    };
+
+
+    // return if no updatable fields available
+    if (setFields.length === 0) return null;
+
+    values.push(id);
+
+
+    const query = `
+        UPDATE vehicles
+        SET ${setFields.join(", ")}
+        WHERE id=$${index}
+        RETURNING id, vehicle_name, type, registration_number, daily_rent_price, availability_status
+    `;
+
+    const result = await pool.query(query, values);
+
+    return result;
+
 }
 
 
@@ -47,4 +87,5 @@ export const vehicleServices = {
     createVehicle,
     getAllVehicles,
     getSingleVehicle,
+    updateVehicle,
 }
