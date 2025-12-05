@@ -28,8 +28,11 @@ const createUser = async (payload: CreateUserProps) => {
     const hashedPassword = bcrypt.hashSync(password, 12);
 
     const result = await pool.query(`
-        INSERT INTO users(name, email, password, phone, role) VALUES($1, $2, $3, $4, $5)
+        INSERT INTO users(name, email, password, phone, role)
+        VALUES($1, $2, $3, $4, $5)
+        RETURNING id, name, email, phone, role
         `, [name, email, hashedPassword, phone, role]);
+    // console.log(result);
 
     return result;
 
@@ -65,8 +68,11 @@ const loginUser = async (payload: LoginUserProps) => {
 
     return {
         success: true,
-        token: token,
-        user: userPayload
+        message: 'Login successful',
+        data: {
+            token,
+            user: userPayload
+        }
     }
 }
 

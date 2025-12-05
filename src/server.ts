@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express'
 import config from './config'
 import initDB from './config/db';
 import { authRoutes } from './modules/auth/auth.route';
+import { vehicleRoutes } from './modules/vehicles/vehicle.route';
 const app = express()
 const port = config.port;
 
@@ -21,7 +22,11 @@ app.get('/', (req: Request, res: Response) => {
 
 
 // auth routes
-app.use(`${startUrl}/auth`, authRoutes)
+app.use(`${startUrl}/auth`, authRoutes);
+
+
+// vehicle routes
+app.use(`${startUrl}/vehicles`, vehicleRoutes);
 
 
 

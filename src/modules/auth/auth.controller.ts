@@ -31,11 +31,11 @@ const createUser = async (req: Request, res: Response) => {
             })
         };
 
-        console.log(result)
+        // console.log(result)
 
         res.status(201).json({
             success: true,
-            message: 'new user created!',
+            message: 'User registered successfully',
             data: result?.rows[0]
         })
 
