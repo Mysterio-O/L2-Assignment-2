@@ -73,11 +73,50 @@ const getAllVehicles = async (req: Request, res: Response) => {
             message: err.message || 'internal server error getting all vehicles'
         })
     }
+};
+
+
+
+const getSingleVehicle = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(404).json({
+                success: false,
+                message: "vehicle id not found"
+            })
+        };
+
+        const result = await vehicleServices.getSingleVehicle(id);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'vehicle not found',
+                data: {}
+            })
+        };
+
+        res.status(200).json({
+            success: true,
+            message: "Vehicle retrieved successfully",
+            data: result.rows[0]
+        })
+    }
+    catch (err: any) {
+        console.error('error getting single vehicle', err)
+        res.status(500).json({
+            success: false,
+            message: err.message || 'internal server error getting single user'
+        })
+    }
+
 }
 
 
 
 export const vehicleControllers = {
     createVehicle,
-    getAllVehicles
+    getAllVehicles,
+    getSingleVehicle,
 }
