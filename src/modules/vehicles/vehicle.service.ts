@@ -80,6 +80,16 @@ const updateVehicle = async (id: string, payload: Record<string, any>) => {
 
     return result;
 
+};
+
+
+
+const deleteVehicle = async (id: string) => {
+    const result =await pool.query(`
+        DELETE FROM vehicles WHERE id = $1
+        `, [id]);
+
+    return result;
 }
 
 
@@ -88,4 +98,5 @@ export const vehicleServices = {
     getAllVehicles,
     getSingleVehicle,
     updateVehicle,
+    deleteVehicle,
 }

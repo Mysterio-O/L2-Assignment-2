@@ -156,6 +156,42 @@ const updateVehicle = async (req: Request, res: Response) => {
         })
     }
 
+};
+
+
+const deleteVehicle = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "vehicle id not found"
+            })
+        };
+
+        const result = await vehicleServices.deleteVehicle(id);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "user not found"
+            })
+        };
+
+        res.status(200).json({
+            success: true,
+            message: "Vehicle deleted successfully"
+        })
+    }
+    catch(err:any){
+        console.error("error deleting vehicle",err);
+        res.status(500).json({
+            success:false,
+            message:err.message || 'internal server error deleting user',
+            error:err.message || 'internal server error deleting user'
+        })
+    }
+
 }
 
 
@@ -164,5 +200,6 @@ export const vehicleControllers = {
     createVehicle,
     getAllVehicles,
     getSingleVehicle,
-    updateVehicle
+    updateVehicle,
+    deleteVehicle
 }
