@@ -20,7 +20,7 @@ export const autoReturnEndedBooking = async () => {
             WHERE v.id = b.vehicle_id
             AND v.availability_status <> 'available'
             RETURNING b.id AS booking_id, v.id AS vehicle_id
-            `);
+            `,['returned','active','available']);
 
         await client.query("COMMIT");
 

@@ -85,7 +85,15 @@ const updateBooking = async (req: Request, res: Response) => {
             success: false,
             message: "no status found"
         })
-    }
+    };
+
+    // check permission according to role
+    if (req.user && req?.user.role === 'customer' && req.body.status === 'returned') {
+        return res.status(400).json({
+            success: false,
+            message: "you're not allowed to make this action"
+        })
+    };
 
     const validationError = bookingHelpers.helpUpdate(req.body.status);
 
@@ -98,17 +106,17 @@ const updateBooking = async (req: Request, res: Response) => {
 
     const result = await bookingServices.updateBooking(id, req.body.status);
 
-    if(result.success === false){
+    if (result.success === false) {
         return res.status(result.status).json({
-            success:result.success,
-            message:result.message
+            success: result.success,
+            message: result.message
         })
     }
 
     res.status(200).json({
-        success:true,
-        message:"Booking cancelled successfully",
-        data:result
+        success: true,
+        message: "Booking cancelled successfully",
+        data: result
     })
 
 }
