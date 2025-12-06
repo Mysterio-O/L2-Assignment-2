@@ -19,7 +19,6 @@ const auth = (...roles: Role[]) => {
 
             req.user = decoded;
 
-
             // role check
             if (roles.length && !roles.includes(decoded.role)) {
                 return res.status(403).json({

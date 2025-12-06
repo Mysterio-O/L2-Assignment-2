@@ -45,10 +45,54 @@ const updateUser = async (id: string, payload: Record<string, any>) => {
 }
 
 
-const deleteUser = async(id:string)=> {
-    const result = await pool.query(`DELETE FROM users WHERE id=$1`,[id]);
-    return result;
-}
+const deleteUser = async (id: string) => {
+    const activeBookings = await pool.query(
+        `
+    SELECT 1
+    FROM bookings
+    WHERE customer_id = $1
+    AND status = 'active'
+    LIMIT 1
+    `,
+        [id]
+    );
+    // console.log(activeBookings)
+    
+    const hasActive = (activeBookings.rowCount ?? 0) > 0;
+    console.log('from user delete',hasActive,activeBookings)
+
+    if (hasActive) {
+        return {
+            success: false,
+            status: 400,
+            message: "User cannot be deleted because they have active bookings",
+        };
+    }
+
+    const result = await pool.query(
+        `
+    DELETE FROM users
+    WHERE id = $1
+    RETURNING *
+    `,
+        [id]
+    );
+
+    if (result.rowCount === 0) {
+        return {
+            success: false,
+            status: 404,
+            message: "User not found",
+        };
+    }
+
+    return {
+        success: true,
+        status: 200,
+        message: "User deleted successfully",
+    };
+};
+
 
 
 export const userServices = {

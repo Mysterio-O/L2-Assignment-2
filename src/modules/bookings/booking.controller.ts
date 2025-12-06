@@ -42,7 +42,8 @@ const createBooking = async (req: Request, res: Response) => {
 
 const getBookings = async (req: Request, res: Response) => {
     try {
-        const result = await bookingServices.getBookings();
+
+        const result = await bookingServices.getBookings(req?.user!);
 
         if (result.rowCount === 0) {
             return res.status(200).json({
@@ -113,10 +114,10 @@ const updateBooking = async (req: Request, res: Response) => {
         })
     }
 
-    res.status(200).json({
-        success: true,
-        message: "Booking cancelled successfully",
-        data: result
+    res.status(result.status).json({
+        success: result.success,
+        message: result.message,
+        data: result.data
     })
 
 }

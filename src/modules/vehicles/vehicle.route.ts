@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { vehicleControllers } from "./vehicle.controller";
+import auth from "../../middleware/auth";
 
 const router = Router();
 
 // create new vehicles
-router.post('/', vehicleControllers.createVehicle);
+router.post('/', auth('admin'), vehicleControllers.createVehicle);
 
 
 // get all vehicles
@@ -16,11 +17,11 @@ router.get("/:id", vehicleControllers.getSingleVehicle);
 
 
 // update vehicle
-router.put("/:id", vehicleControllers.updateVehicle);
+router.put("/:id", auth('admin'), vehicleControllers.updateVehicle);
 
 
 // delete vehicle
-router.delete("/:id", vehicleControllers.deleteVehicle);
+router.delete("/:id", auth('admin'), vehicleControllers.deleteVehicle);
 
 
 export const vehicleRoutes = router;

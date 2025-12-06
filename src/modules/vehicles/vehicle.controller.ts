@@ -171,16 +171,10 @@ const deleteVehicle = async (req: Request, res: Response) => {
 
         const result = await vehicleServices.deleteVehicle(id);
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "user not found"
-            })
-        };
 
-        res.status(200).json({
-            success: true,
-            message: "Vehicle deleted successfully"
+        res.status(result.status).json({
+            success: result.success,
+            message: result.message
         })
     }
     catch(err:any){

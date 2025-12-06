@@ -1,5 +1,7 @@
+import { JwtPayload } from "jsonwebtoken";
 import { pool } from "../../config/db";
 import { bookingHelpers } from "../../helper/bookingHelper";
+import { UserPayload } from "../../types/app/types";
 
 
 const createBooking = async (payload: Record<string, any>) => {
@@ -80,112 +82,58 @@ const createBooking = async (payload: Record<string, any>) => {
 
 
 
-const getBookings = async () => {
-    const result = await pool.query(`
-        SELECT 
-        id,
-        customer_id,
-        vehicle_id,
-        to_char(rent_start_date, 'YYYY-MM-DD') AS rent_start_date,
-        to_char(rent_end_date,   'YYYY-MM-DD') AS rent_end_date,
-        total_price,
-        status
-        FROM bookings
-        `);
-    return result;
+const getBookings = async (user: JwtPayload) => {
+    let query = `
+                SELECT 
+                  id,
+                  customer_id,
+                  vehicle_id,
+                  to_char(rent_start_date, 'YYYY-MM-DD') AS rent_start_date,
+                  to_char(rent_end_date,   'YYYY-MM-DD') AS rent_end_date,
+                  total_price,
+                  status
+                FROM bookings
+                `;
+
+    const params: any[] = [];
+
+    if (user.role === "customer") {
+        query += ` WHERE customer_id = $1`;
+        params.push(user.id);
+    };
+
+    const result = await pool.query(query, params);
+
+    return result
 };
 
 
-
 const updateBooking = async (id: string, status: "cancelled" | "returned") => {
-    // find the booking first
     const booking = await pool.query(`SELECT * FROM bookings WHERE id = $1`, [id]);
 
     if (booking.rowCount === 0) {
         return { success: false, status: 400, message: "booking not found" };
-    };
-
-
-    // system auto update on period ends
-    const hasBookingEnded = bookingHelpers.hasBookingEnded(booking.rows[0].rent_end_date);
-
-    if (hasBookingEnded) {
-        await pool.query(`
-            UPDATE bookings
-            SET status = $1
-            WHERE id = $2
-            `, ['returned', id]);
-        await pool.query(`
-            UPDATE vehicles
-            SET availability_status = $1
-            WHERE id = $2
-            `, ['available', booking.rows[0].vehicle_id]);
     }
 
-
-
-    // check if the request from customer or Admin
-    /**
-     * customers can send status -> cancelled
-     * admin can send status -> returned
-     */
-    if (status === 'cancelled') {
-        // check if the booking already started
-        const hasBookingStarted = bookingHelpers.hasBookingStarted(booking.rows[0].rent_start_date);
+    if (status === "cancelled") {
+        const hasBookingStarted = bookingHelpers.hasBookingStarted(
+            booking.rows[0].rent_start_date
+        );
 
         if (hasBookingStarted) {
-            return { success: false, status: 400, message: "booking has already started. cannot change status now." }
-        };
+            return {
+                success: false,
+                status: 400,
+                message: "booking has already started. cannot change status now.",
+            };
+        }
 
-
-        // updated the booking status
-        const updateBooking = await pool.query(`
-            UPDATE bookings
-            SET status = $1
-            WHERE id = $2
-            RETURNING
-            id,
-            customer_id,
-            vehicle_id,
-            to_char(rent_start_date, 'YYYY-MM-DD') AS rent_start_date,
-            to_char(rent_end_date,   'YYYY-MM-DD') AS rent_end_date,
-            total_price,
-            status
-            `, [status, id]);
-
-
-        // update vehicle
-        const vehicle_id = booking.rows[0].vehicle_id;
-
-        await pool.query(`
-                UPDATE vehicles
-                SET availability_status = $1
-                WHERE id = $2
-                `, ['available', vehicle_id]);
-
-
-        return updateBooking
-
-    }
-
-    // if admin, 
-
-    // update vehicle status
-    const updateVehicleStatus = await pool.query(`
-            UPDATE vehicles
-            SET availability_status = $1
-            WHERE id = $2
-            RETURNING *
-            `, ['available', booking.rows[0].vehicle_id]);
-
-    const availability_status = updateVehicleStatus.rows[0].availability_status
-
-    // update booking
-    const updateBooking = await pool.query(`
-        UPDATE bookings
-        SET status = $1
-        WHERE id = $2
-        RETURNING
+        const updated = await pool.query(
+            `
+      UPDATE bookings
+      SET status = $1
+      WHERE id = $2
+      RETURNING
         id,
         customer_id,
         vehicle_id,
@@ -193,20 +141,74 @@ const updateBooking = async (id: string, status: "cancelled" | "returned") => {
         to_char(rent_end_date,   'YYYY-MM-DD') AS rent_end_date,
         total_price,
         status
-        `, [status, id])
+      `,
+            [status, id]
+        );
 
-    if (updateBooking.rowCount === 0) {
-        return { success: false, status: 400, message: 'failed to update booking' }
+        const vehicle_id = booking.rows[0].vehicle_id;
+
+        await pool.query(
+            `
+      UPDATE vehicles
+      SET availability_status = $1
+      WHERE id = $2
+      `,
+            ["available", vehicle_id]
+        );
+
+        return {
+            success: true,
+            status: 200,
+            message: "Booking cancelled successfully",
+            data: updated.rows[0],
+        };
+    }
+
+    // status === 'returned' (admin)
+    const vehicleRes = await pool.query(
+        `
+    UPDATE vehicles
+    SET availability_status = $1
+    WHERE id = $2
+    RETURNING availability_status
+    `,
+        ["available", booking.rows[0].vehicle_id]
+    );
+
+    const updated = await pool.query(
+        `
+    UPDATE bookings
+    SET status = $1
+    WHERE id = $2
+    RETURNING
+      id,
+      customer_id,
+      vehicle_id,
+      to_char(rent_start_date, 'YYYY-MM-DD') AS rent_start_date,
+      to_char(rent_end_date,   'YYYY-MM-DD') AS rent_end_date,
+      total_price,
+      status
+    `,
+        [status, id]
+    );
+
+    if (updated.rowCount === 0) {
+        return { success: false, status: 400, message: "failed to update booking" };
     }
 
     return {
-        ...updateBooking.rows[0],
-        vehicle: {
-            availability_status
-        }
-    }
+        success: true,
+        status: 200,
+        message: "Booking marked as returned. Vehicle is now available",
+        data: {
+            ...updated.rows[0],
+            vehicle: {
+                availability_status: vehicleRes.rows[0].availability_status,
+            },
+        },
+    };
+};
 
-}
 
 
 
