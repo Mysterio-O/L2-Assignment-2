@@ -93,6 +93,119 @@ const getBookings = async () => {
         FROM bookings
         `);
     return result;
+};
+
+
+
+const updateBooking = async (id: string, status: "cancelled" | "returned") => {
+    // find the booking first
+    const booking = await pool.query(`SELECT * FROM bookings WHERE id = $1`, [id]);
+
+    if (booking.rowCount === 0) {
+        return { success: false, status: 400, message: "booking not found" };
+    };
+
+
+    // system auto update on period ends
+    const hasBookingEnded = bookingHelpers.hasBookingEnded(booking.rows[0].rent_end_date);
+
+    if (hasBookingEnded) {
+        await pool.query(`
+            UPDATE bookings
+            SET status = $1
+            WHERE id = $2
+            `, ['returned', id]);
+        await pool.query(`
+            UPDATE vehicles
+            SET availability_status = $1
+            WHERE id = $2
+            `, ['available', booking.rows[0].vehicle_id]);
+    }
+
+
+
+    // check if the request from customer or Admin
+    /**
+     * customers can send status -> cancelled
+     * admin can send status -> returned
+     */
+    if (status === 'cancelled') {
+        // check if the booking already started
+        const hasBookingStarted = bookingHelpers.hasBookingStarted(booking.rows[0].rent_start_date);
+
+        if (hasBookingStarted) {
+            return { success: false, status: 400, message: "booking has already started. cannot change status now." }
+        };
+
+
+        // updated the booking status
+        const updateBooking = await pool.query(`
+            UPDATE bookings
+            SET status = $1
+            WHERE id = $2
+            RETURNING
+            id,
+            customer_id,
+            vehicle_id,
+            to_char(rent_start_date, 'YYYY-MM-DD') AS rent_start_date,
+            to_char(rent_end_date,   'YYYY-MM-DD') AS rent_end_date,
+            total_price,
+            status
+            `, [status, id]);
+
+
+        // update vehicle
+        const vehicle_id = booking.rows[0].vehicle_id;
+
+        await pool.query(`
+                UPDATE vehicles
+                SET availability_status = $1
+                WHERE id = $2
+                `, ['available', vehicle_id]);
+
+
+        return updateBooking
+
+    }
+
+    // if admin, 
+
+    // update vehicle status
+    const updateVehicleStatus = await pool.query(`
+            UPDATE vehicles
+            SET availability_status = $1
+            WHERE id = $2
+            RETURNING *
+            `, ['available', booking.rows[0].vehicle_id]);
+
+    const availability_status = updateVehicleStatus.rows[0].availability_status
+
+    // update booking
+    const updateBooking = await pool.query(`
+        UPDATE bookings
+        SET status = $1
+        WHERE id = $2
+        RETURNING
+        id,
+        customer_id,
+        vehicle_id,
+        to_char(rent_start_date, 'YYYY-MM-DD') AS rent_start_date,
+        to_char(rent_end_date,   'YYYY-MM-DD') AS rent_end_date,
+        total_price,
+        status
+        `, [status, id])
+
+    if (updateBooking.rowCount === 0) {
+        return { success: false, status: 400, message: 'failed to update booking' }
+    }
+
+    return {
+        ...updateBooking.rows[0],
+        vehicle: {
+            availability_status
+        }
+    }
+
 }
 
 
@@ -100,4 +213,5 @@ const getBookings = async () => {
 export const bookingServices = {
     createBooking,
     getBookings,
+    updateBooking
 }

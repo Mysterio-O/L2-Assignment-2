@@ -20,14 +20,34 @@ const formatYMD = (value: Date | string) => {
     const d = new Date(value);
 
     const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0"); 
+    const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 };
 
 
+const hasBookingStarted = (rent_start_date: string) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return rent_start_date <= todayStr;
+};
+const hasBookingEnded = (rent_end_date: string) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return rent_end_date <= todayStr;
+};
+
+
+const helpUpdate = (status: 'cancelled' | 'returned') => {
+    if (status !== 'cancelled' && status !== 'returned') {
+        return { success: false, status: 400, message: 'invalid status' }
+    }
+    return null;
+}
+
 export const bookingHelpers = {
     helpCreate,
-    formatYMD
+    formatYMD,
+    hasBookingStarted,
+    helpUpdate,
+    hasBookingEnded
 }

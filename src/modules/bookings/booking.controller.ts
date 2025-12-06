@@ -68,11 +68,55 @@ const getBookings = async (req: Request, res: Response) => {
             error: err.message
         })
     }
+};
+
+
+const updateBooking = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({
+            success: false,
+            message: "booking id not found"
+        })
+    };
+
+    if (!req.body.status) {
+        return res.status(400).json({
+            success: false,
+            message: "no status found"
+        })
+    }
+
+    const validationError = bookingHelpers.helpUpdate(req.body.status);
+
+    if (validationError) {
+        return res.status(validationError.status).json({
+            success: validationError.success,
+            message: validationError.message
+        });
+    };
+
+    const result = await bookingServices.updateBooking(id, req.body.status);
+
+    if(result.success === false){
+        return res.status(result.status).json({
+            success:result.success,
+            message:result.message
+        })
+    }
+
+    res.status(200).json({
+        success:true,
+        message:"Booking cancelled successfully",
+        data:result
+    })
+
 }
 
 
 
 export const bookingControllers = {
     createBooking,
-    getBookings
+    getBookings,
+    updateBooking
 }

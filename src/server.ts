@@ -5,6 +5,10 @@ import { authRoutes } from './modules/auth/auth.route';
 import { vehicleRoutes } from './modules/vehicles/vehicle.route';
 import { userRoutes } from './modules/users/user.route';
 import { bookingRoutes } from './modules/bookings/booking.route';
+import cron from 'node-cron';
+import { autoReturnEndedBooking } from './modules/bookings/cron.service';
+
+
 const app = express()
 const port = config.port;
 
@@ -32,11 +36,26 @@ app.use(`${startUrl}/vehicles`, vehicleRoutes);
 
 
 // users routes
-app.use(`${startUrl}/users`,userRoutes);
+app.use(`${startUrl}/users`, userRoutes);
 
 
 // booking routes 
-app.use(`${startUrl}/bookings`,bookingRoutes)
+app.use(`${startUrl}/bookings`, bookingRoutes);
+
+
+
+// auto update vehicle and booking on end period
+cron.schedule("*/10 * * * *", async () => {
+    try {
+        const result = await autoReturnEndedBooking();
+        if (result.success && result.updatedCount > 0) {
+            console.log(`[CRON] Auto-returned ${result.updatedCount} ended bookings.`)
+        }
+    }
+    catch (err) {
+        console.error("[CRON] autoReturnEndedBookings failed:", err);
+    }
+})
 
 
 
