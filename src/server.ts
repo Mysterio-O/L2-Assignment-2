@@ -3,6 +3,7 @@ import config from './config'
 import initDB from './config/db';
 import { authRoutes } from './modules/auth/auth.route';
 import { vehicleRoutes } from './modules/vehicles/vehicle.route';
+import { userRoutes } from './modules/users/user.route';
 const app = express()
 const port = config.port;
 
@@ -27,6 +28,10 @@ app.use(`${startUrl}/auth`, authRoutes);
 
 // vehicle routes
 app.use(`${startUrl}/vehicles`, vehicleRoutes);
+
+
+// users routes
+app.use(`${startUrl}/users`,userRoutes);
 
 
 
