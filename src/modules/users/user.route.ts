@@ -12,6 +12,10 @@ router.get("/", userControllers.getUsers);
 router.put("/:id", userControllers.updateUser);
 
 
+// delete user
+router.delete("/:id", userControllers.deleteUser)
+
+
 
 
 
