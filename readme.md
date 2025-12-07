@@ -341,6 +341,7 @@ assignment-02/
 ├── package-lock.json
 ├── package.json
 ├── tsconfig.json
+├── vercel.json
 └── readme.md
 ```
 
