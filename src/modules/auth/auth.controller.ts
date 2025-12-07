@@ -43,7 +43,8 @@ const createUser = async (req: Request, res: Response) => {
         console.error("error adding new user", err);
         res.status(500).json({
             success: false,
-            message: err?.message || 'internal server error'
+            message: 'internal server error',
+            error:err.message
         })
     }
 };
@@ -88,7 +89,8 @@ const loginUser = async (req: Request, res: Response) => {
         console.error("error logging in user", err);
         res.status(500).json({
             success: false,
-            message: err.message || 'internal server error logging in'
+            message: 'internal server error logging in',
+            error:err.message
         })
     }
 

@@ -73,52 +73,62 @@ const getBookings = async (req: Request, res: Response) => {
 
 
 const updateBooking = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    if (!id) {
-        return res.status(400).json({
-            success: false,
-            message: "booking id not found"
-        })
-    };
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "booking id not found"
+            })
+        };
 
-    if (!req.body.status) {
-        return res.status(400).json({
-            success: false,
-            message: "no status found"
-        })
-    };
+        if (!req.body.status) {
+            return res.status(400).json({
+                success: false,
+                message: "no status found"
+            })
+        };
 
-    // check permission according to role
-    if (req.user && req?.user.role === 'customer' && req.body.status === 'returned') {
-        return res.status(400).json({
-            success: false,
-            message: "you're not allowed to make this action"
-        })
-    };
+        // check permission according to role
+        if (req.user && req?.user.role === 'customer' && req.body.status === 'returned') {
+            return res.status(400).json({
+                success: false,
+                message: "you're not allowed to make this action"
+            })
+        };
 
-    const validationError = bookingHelpers.helpUpdate(req.body.status);
+        const validationError = bookingHelpers.helpUpdate(req.body.status);
 
-    if (validationError) {
-        return res.status(validationError.status).json({
-            success: validationError.success,
-            message: validationError.message
-        });
-    };
+        if (validationError) {
+            return res.status(validationError.status).json({
+                success: validationError.success,
+                message: validationError.message
+            });
+        };
 
-    const result = await bookingServices.updateBooking(id, req.body.status);
+        const result = await bookingServices.updateBooking(id, req.body.status);
 
-    if (result.success === false) {
-        return res.status(result.status).json({
+        if (result.success === false) {
+            return res.status(result.status).json({
+                success: result.success,
+                message: result.message
+            })
+        }
+
+        res.status(result.status).json({
             success: result.success,
-            message: result.message
+            message: result.message,
+            data: result.data
         })
     }
-
-    res.status(result.status).json({
-        success: result.success,
-        message: result.message,
-        data: result.data
-    })
+    catch (err: any) {
+        console.error("error updating booking", err);
+        res.status(500).json({
+            success: false,
+            message: "internal server error",
+            error: err.message
+        })
+    }
 
 }
 

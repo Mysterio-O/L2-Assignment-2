@@ -41,7 +41,8 @@ const createVehicle = async (req: Request, res: Response) => {
         console.error("error adding new vehicle", err);
         res.status(500).json({
             success: false,
-            message: err.message || 'internal server error adding new vehicle'
+            message: 'internal server error adding new vehicle',
+            error: err.message
         })
     }
 };
@@ -70,7 +71,8 @@ const getAllVehicles = async (req: Request, res: Response) => {
         console.error("error getting all vehicles", err);
         res.status(500).json({
             success: false,
-            message: err.message || 'internal server error getting all vehicles'
+            message: 'internal server error getting all vehicles',
+            error: err.message
         })
     }
 };
@@ -107,7 +109,8 @@ const getSingleVehicle = async (req: Request, res: Response) => {
         console.error('error getting single vehicle', err)
         res.status(500).json({
             success: false,
-            message: err.message || 'internal server error getting single user'
+            message: 'internal server error getting single user',
+            error: err.message
         })
     }
 
@@ -153,7 +156,8 @@ const updateVehicle = async (req: Request, res: Response) => {
         console.error("error updating vehicle", err);
         res.status(500).json({
             success: false,
-            message: err.message || 'internal server error updating vehicle'
+            message: 'internal server error updating vehicle',
+            error: err.message
         })
     }
 
@@ -178,12 +182,12 @@ const deleteVehicle = async (req: Request, res: Response) => {
             message: result.message
         })
     }
-    catch(err:any){
-        console.error("error deleting vehicle",err);
+    catch (err: any) {
+        console.error("error deleting vehicle", err);
         res.status(500).json({
-            success:false,
-            message:err.message || 'internal server error deleting user',
-            error:err.message || 'internal server error deleting user'
+            success: false,
+            message:'internal server error deleting user',
+            error: err.message
         })
     }
 
