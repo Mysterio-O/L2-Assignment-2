@@ -3,6 +3,8 @@ import { pool } from "../../config/db"
 export const autoReturnEndedBooking = async () => {
     const client = await pool.connect();
 
+    console.log('cron service started. pool connected')
+
     try {
         await client.query("BEGIN");
 
@@ -45,6 +47,7 @@ export const autoReturnEndedBooking = async () => {
         }
     }
     finally {
+        console.log('cron job finished. exiting...')
         client.release();
     }
 

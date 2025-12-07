@@ -45,17 +45,39 @@ app.use(`${startUrl}/bookings`, bookingRoutes);
 
 
 // auto update vehicle and booking on end period
-cron.schedule("*/10 * * * *", async () => {
+app.post(`${startUrl}/cron/auto-return`, async (req: Request, res: Response) => {
     try {
-        const result = await autoReturnEndedBooking();
-        if (result.success && result.updatedCount > 0) {
-            console.log(`[CRON] Auto-returned ${result.updatedCount} ended bookings.`)
+        // Verify cron secret
+        const providedSecret = req.headers['x-cron-secret'];
+
+        if (!providedSecret || providedSecret !== config.cron_secret) {
+            console.log('[CRON] Unauthorized cron attempt');
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized'
+            });
         }
+
+        console.log('[CRON] Starting auto return job...');
+
+        const result = await autoReturnEndedBooking();
+
+        if (result.success && result.updatedCount > 0) {
+            console.log(`[CRON] Auto-returned ${result.updatedCount} ended bookings`);
+        } else {
+            console.log('[CRON] No bookings to return');
+        }
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error('[CRON] Job failed:', error);
+        return res.status(500).json({
+            success: false,
+            error: (error as Error).message
+        });
     }
-    catch (err) {
-        console.error("[CRON] autoReturnEndedBookings failed:", err);
-    }
-})
+});
 
 
 
