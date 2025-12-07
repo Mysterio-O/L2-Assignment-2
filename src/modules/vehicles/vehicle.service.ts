@@ -45,8 +45,9 @@ const getSingleVehicle = async (id: string) => {
 
 const updateVehicle = async (id: string, payload: Record<string, any>) => {
     const allowedFields = ["vehicle_name", "type", "registration_number", "daily_rent_price", "availability_status",];
+    console.log(!payload)
 
-    if (!payload) {
+    if (payload === undefined) {
         return null;
     }
 
