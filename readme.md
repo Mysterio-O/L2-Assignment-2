@@ -97,6 +97,7 @@ CONNECTION_STRING=postgresql://username:password@localhost:5432/database_name
 PORT=5000
 JWT_SECRET=your_super_secret_jwt_key_here
 URL_V=/api/v1
+CRON_SECRET=your_secret_key
 ```
 
 **Environment Variables Explained:**
@@ -104,6 +105,7 @@ URL_V=/api/v1
 - `PORT` - Server port number (default: 5000)
 - `JWT_SECRET` - Secret key for JWT token generation (use a strong, random string)
 - `URL_V` - API version prefix for all routes
+- `CRON_SECRET` - To assign cron job with cron-job
 
 ### 4. Database Setup
 
